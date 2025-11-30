@@ -1,0 +1,2 @@
+# VS_StatusBarClock
+Visual Studioのステータスバーに現在時刻を表示する拡張機能です。
