@@ -8,53 +8,57 @@ using Task = System.Threading.Tasks.Task;
 namespace StatusBarClock
 {
     /// <summary>
-    /// This is the class that implements the package exposed by this assembly.
+    /// Visual Studioステータスバーに時計を表示する拡張機能パッケージのメインクラス
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// The minimum requirement for a class to be considered a valid package for Visual Studio
-    /// is to implement the IVsPackage interface and register itself with the shell.
-    /// This package uses the helper classes defined inside the Managed Package Framework (MPF)
-    /// to do it: it derives from the Package class that provides the implementation of the
-    /// IVsPackage interface and uses the registration attributes defined in the framework to
-    /// register itself and its components with the shell. These attributes tell the pkgdef creation
-    /// utility what data to put into .pkgdef file.
-    /// </para>
-    /// <para>
-    /// To get loaded into VS, the package must be referred by &lt;Asset Type="Microsoft.VisualStudio.VsPackage" ...&gt; in .vsixmanifest file.
-    /// </para>
+    /// AsyncPackageを継承し、バックグラウンド読み込みに対応しています。
+    /// VS2025の統合設定UIに対応したオプションページとプロファイル同期機能を提供します。
     /// </remarks>
     [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
     [Guid(StatusBarClockPackage.PackageGuidString)]
-    [ProvideOptionPage(typeof(ClockOptions), "Status Bar Clock", "General", 0, 0, true)]
+    [ProvideOptionPage(typeof(ClockOptions), "Status Bar Clock", "General", 0, 0, false)]
+    [ProvideProfile(typeof(ClockOptions), "Status Bar Clock", "General", 0, 0, true)]
     [ProvideAutoLoad(Microsoft.VisualStudio.Shell.Interop.UIContextGuids.NoSolution, PackageAutoLoadFlags.BackgroundLoad)]
     [ProvideAutoLoad(Microsoft.VisualStudio.Shell.Interop.UIContextGuids.SolutionExists, PackageAutoLoadFlags.BackgroundLoad)]
     public sealed class StatusBarClockPackage : AsyncPackage
     {
         /// <summary>
-        /// StatusBarClockPackage GUID string.
+        /// パッケージの一意識別子(GUID)
         /// </summary>
+        /// <remarks>
+        /// この値を変更すると既存のユーザー設定が失われます。
+        /// </remarks>
         public const string PackageGuidString = "6a69641d-7d0f-4a16-bd2f-c3467d670b2e";
 
+        /// <summary>
+        /// ステータスバーに時計を表示するコントロールのインスタンス
+        /// </summary>
         private ClockStatusBarControl clockControl;
 
         #region Package Members
 
         /// <summary>
-        /// Initialization of the package; this method is called right after the package is sited, so this is the place
-        /// where you can put all the initialization code that rely on services provided by VisualStudio.
+        /// パッケージの非同期初期化処理
         /// </summary>
-        /// <param name="cancellationToken">A cancellation token to monitor for initialization cancellation, which can occur when VS is shutting down.</param>
-        /// <param name="progress">A provider for progress updates.</param>
-        /// <returns>A task representing the async work of package initialization, or an already completed task if there is none. Do not return null from this method.</returns>
+        /// <remarks>
+        /// <para>
+        /// UIスレッドに切り替えた後、以下の処理を実行します:
+        /// </para>
+        /// <list type="number">
+        /// <item><description>IVsStatusbarサービスの取得</description></item>
+        /// <item><description>ClockStatusBarControlの作成と初期化</description></item>
+        /// <item><description>ClockOptionsのSettingsSavedイベントハンドラの登録</description></item>
+        /// </list>
+        /// </remarks>
+        /// <param name="cancellationToken">初期化キャンセル用のトークン</param>
+        /// <param name="progress">進行状況レポート用のプロバイダー</param>
+        /// <returns>初期化処理を表すタスク</returns>
         protected override async Task InitializeAsync(CancellationToken cancellationToken, IProgress<ServiceProgressData> progress)
         {
             System.Diagnostics.Debug.WriteLine("==============================================");
             System.Diagnostics.Debug.WriteLine("STATUS BAR CLOCK PACKAGE - INITIALIZE START");
             System.Diagnostics.Debug.WriteLine("==============================================");
             
-            // When initialized asynchronously, the current thread may be a background thread at this point.
-            // Do any initialization that requires the UI thread after switching to the UI thread.
             await this.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
             
             System.Diagnostics.Debug.WriteLine("Switched to UI thread");
@@ -84,12 +88,34 @@ namespace StatusBarClock
             System.Diagnostics.Debug.WriteLine("==============================================");
         }
 
+        /// <summary>
+        /// オプション設定保存時のイベントハンドラ
+        /// </summary>
+        /// <remarks>
+        /// ClockStatusBarControl.RefreshSettings()を呼び出し、設定変更を即座に反映します。
+        /// タイマー間隔、表示フォーマット、有効/無効状態などがリアルタイムで更新されます。
+        /// </remarks>
+        /// <param name="sender">イベント送信元(ClockOptionsインスタンス)</param>
+        /// <param name="e">イベント引数</param>
         private void OnSettingsSaved(object sender, EventArgs e)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
             clockControl?.RefreshSettings();
         }
 
+        /// <summary>
+        /// パッケージのリソースを解放
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// 以下のクリーンアップ処理を実行します:
+        /// </para>
+        /// <list type="bullet">
+        /// <item><description>ClockOptionsのSettingsSavedイベントハンドラの登録解除</description></item>
+        /// <item><description>ClockStatusBarControlの破棄(タイマー停止、ステータスバークリア)</description></item>
+        /// </list>
+        /// </remarks>
+        /// <param name="disposing">マネージドリソースを破棄する場合はtrue</param>
         protected override void Dispose(bool disposing)
         {
             if (disposing)

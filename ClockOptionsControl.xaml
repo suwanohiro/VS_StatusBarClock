@@ -1,0 +1,122 @@
+<UserControl x:Class="StatusBarClock.ClockOptionsControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:StatusBarClock"
+             mc:Ignorable="d" 
+             d:DesignHeight="600" d:DesignWidth="800"
+             Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+    </UserControl.Resources>
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="10">
+        <StackPanel MaxWidth="600">
+            <!-- Header -->
+            <TextBlock Text="Status Bar Clock Settings" 
+                       FontSize="20" 
+                       FontWeight="SemiBold"
+                       Margin="0,0,0,20"/>
+
+            <!-- Enable/Disable Section -->
+            <GroupBox Header="General" Margin="0,0,0,15" Padding="10">
+                <StackPanel>
+                    <CheckBox x:Name="EnabledCheckBox" 
+                              Content="Enable status bar clock"
+                              IsChecked="{Binding Enabled, Mode=TwoWay}"
+                              Margin="0,5"/>
+                </StackPanel>
+            </GroupBox>
+
+            <!-- Display Settings Section -->
+            <GroupBox Header="Display Settings" Margin="0,0,0,15" Padding="10">
+                <StackPanel>
+                    <!-- Prefix Text -->
+                    <TextBlock Text="Prefix Text:" 
+                               FontWeight="SemiBold"
+                               Margin="0,5,0,5"/>
+                    <TextBox x:Name="PrefixTextBox"
+                             Text="{Binding PrefixText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                             Margin="0,0,0,10"
+                             ToolTip="Text to display before the time (e.g., 'Time: ' or '?? ')"/>
+                    
+                    <!-- Date/Time Format -->
+                    <TextBlock Text="Date/Time Format:" 
+                               FontWeight="SemiBold"
+                               Margin="0,5,0,5"/>
+                    <TextBox x:Name="DateTimeFormatTextBox"
+                             Text="{Binding DateTimeFormat, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                             Margin="0,0,0,5"/>
+                    
+                    <!-- Format Help -->
+                    <Expander Header="Format Specifiers" Margin="0,0,0,10">
+                        <TextBlock TextWrapping="Wrap" Margin="10" FontFamily="Consolas" FontSize="11">
+                            <Run Text="yyyy = Year (4 digits)      MM = Month (2 digits)        dd = Day (2 digits)"/><LineBreak/>
+                            <Run Text="MMMM = Month name (full)    MMM = Month name (short)"/><LineBreak/>
+                            <Run Text="dddd = Day name (full)      ddd = Day name (short)"/><LineBreak/>
+                            <Run Text="HH = Hour 24h (00-23)       hh = Hour 12h (01-12)"/><LineBreak/>
+                            <Run Text="mm = Minutes (00-59)        ss = Seconds (00-59)"/><LineBreak/>
+                            <Run Text="fff = Milliseconds          tt = AM/PM"/><LineBreak/><LineBreak/>
+                            <Run Text="Examples:" FontWeight="Bold"/><LineBreak/>
+                            <Run Text="yyyy-MM-dd (dddd) HH:mm:ss = 2024-01-15 (Monday) 14:30:45"/><LineBreak/>
+                            <Run Text="yyyy-MM-dd HH:mm:ss.fff = 2024-01-15 14:30:45.123"/><LineBreak/>
+                            <Run Text="MM/dd/yyyy hh:mm:ss tt = 01/15/2024 02:30:45 PM"/>
+                        </TextBlock>
+                    </Expander>
+
+                    <!-- Show Milliseconds -->
+                    <CheckBox x:Name="ShowMillisecondsCheckBox"
+                              Content="Show Milliseconds (appends .fff to format if not present)"
+                              IsChecked="{Binding ShowMilliseconds, Mode=TwoWay}"
+                              Margin="0,5,0,10"/>
+
+                    <!-- Update Interval -->
+                    <TextBlock Text="Update Interval (milliseconds):" 
+                               FontWeight="SemiBold"
+                               Margin="0,5,0,5"/>
+                    <DockPanel Margin="0,0,0,5">
+                        <TextBox x:Name="UpdateIntervalTextBox"
+                                 Text="{Binding UpdateInterval, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                 Width="100"
+                                 DockPanel.Dock="Left"
+                                 Margin="0,0,10,0"/>
+                        <TextBlock Text="(Minimum: 10ms, Maximum: 60000ms)"
+                                   VerticalAlignment="Center"
+                                   Foreground="Gray"
+                                   FontSize="11"/>
+                    </DockPanel>
+                    <TextBlock Text="Default is 1000ms (1 second). Set to 100ms for smoother millisecond display."
+                               TextWrapping="Wrap"
+                               Foreground="Gray"
+                               FontSize="11"
+                               Margin="0,0,0,10"/>
+                </StackPanel>
+            </GroupBox>
+
+            <!-- Preview Section -->
+            <GroupBox Header="Preview" Margin="0,0,0,15" Padding="10">
+                <StackPanel>
+                    <TextBlock Text="Current format will display as:" 
+                               Margin="0,0,0,5"/>
+                    <Border Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                            BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                            BorderThickness="1"
+                            Padding="10"
+                            Margin="0,0,0,5">
+                        <TextBlock x:Name="PreviewTextBlock"
+                                   Text="{Binding Preview, Mode=OneWay}"
+                                   FontFamily="Consolas"
+                                   FontSize="14"
+                                   FontWeight="SemiBold"/>
+                    </Border>
+                    <TextBlock x:Name="ValidationMessageTextBlock"
+                               Text="{Binding ValidationMessage, Mode=OneWay}"
+                               Foreground="Red"
+                               TextWrapping="Wrap"
+                               Margin="0,5,0,0"
+                               Visibility="{Binding HasValidationError, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                </StackPanel>
+            </GroupBox>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
